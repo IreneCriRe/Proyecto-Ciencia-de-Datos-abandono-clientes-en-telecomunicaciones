@@ -1,36 +1,5 @@
-CIENCIA DE DATOS: EXAMEN FINAL
-MD.PlantillaTexto(DOCUMENTO2 05)Esp.dot
-3
-TRABAJO FINAL: CIENCIA DE DATOS
-INSTRUCCIONES
-Realización del trabajo
-Para la realización de este trabajo final deberás elaborar un archivo .Rmd dónde resolverás
-cada uno de los ejercicios propuestos en este enunciado.
-Entrega del trabajo
-Para que la entrega se considere válida será necesario que nos envíes una carpeta comprimida
-que contenga:
-n El archivo .csv dónde se encuentran los datos que utilizarás para la realización
-de los ejercicios y que se adjunta en la sección del trabajo final.
-n El archivo. Rmd dónde habrás realizado cada uno de los ejercicios propuestos
-en este enunciado.
-n El archivo .html generado al ejecutar el archivo .Rmd mediante knit
-4
-TRABAJO FINAL: CIENCIA DE DATOS
-IMPORTANTE:
-n Si el trabajo NO se entrega siguiendo las instrucciones planteadas en este enunciado,
-quedará suspendido automáticamente.
-n 1 PUNTO de la valoración final del trabajo corresponderá a:
-¨ La presentación, limpieza y legibilidad del documento
-¨ Las explicaciones generadas
-¨ La forma en la que se han empleado las herramientas y conceptos aprendidos
-durante el curso.
-Además, esta puntuación sólo se podrá tener en cuenta si:
-¨ Se han realizado todos los ejercicios propuestos
-¨ La forma de envío y realización del ejercicio coincide con las indicadas al
-principio de este enunciado.
-En caso contrario, la valoración siempre será 0.
-5
-TRABAJO FINAL: CIENCIA DE DATOS
+
+TRABAJO FINAL: CIENCIA DE DATOSS
 EJERCICIO 1 – ANÁLISIS EXPLORATORIO
 En primer lugar, será necesario que crees un archivo. Rmd dónde:
 1. Importarás las librerías necesarias para el desarrollo del trabajo.
