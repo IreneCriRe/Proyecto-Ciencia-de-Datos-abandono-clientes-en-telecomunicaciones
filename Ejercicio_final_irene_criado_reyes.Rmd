@@ -1,0 +1,598 @@
+---
+title: "Trabajo Final Módulo Ciencia de Datos"
+author: "Irene_Criado_Reyes"
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(width=100)
+
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(readr)
+library(GGally)
+library(tidyverse)
+# Pon aquí los paquetes que necesites cargar
+```
+
+En primer lugar, cargaremos los datos en R, leyendo el fichero csv.
+Almacenamos el contenido del fichero en dataframe llamado churn_data
+
+```{r}
+# Código para lectura de datos
+churn_data <- read.csv(file = "data/WA_Fn-UseC_-Telco-Customer-Churn.csv")
+
+#Limpiamos los datos de NA
+churn_data <- churn_data %>% drop_na(TotalCharges)
+```
+
+# Análisis Exploratorio
+
+Lo realizaremos con el conjunto completo de datos: 
+- Identifica para columna el tipo de dato (character, factor, numeric, etc) en el que ha
+sido almacenado
+
+```{r}
+#Utilizamos "str" para ver un resumen de la estructura de datos
+str(churn_data)
+```
+
+-   Visualiza un resumen del conjunto de datos mediante la función summary.
+
+```{r}
+# Utilazamos "summary" para obtener un resumen estadistico
+summary(churn_data)
+```
+
+## Subsección 1
+
+-   De cara a la predicción del churn, para cada una de las variables
+    excepto el customerID: o Realiza un diagrama de frecuencias para las
+    variables cualitativas o histogramas para las variables
+    cuantitativas.
+```{r}
+#Variables cualitativas menos "customerID"
+cual <- c("gender", "SeniorCitizen", "Partner", "Dependents", "PhoneService", 
+              "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", 
+              "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", 
+              "Contract", "PaperlessBilling", "PaymentMethod")
+#Grafico para las variables cualitativas
+for (var in cual){
+  cualitativas <- ggplot(churn_data, aes_string(x=var))+
+    geom_bar(alpha=0.7, fill= "steelblue")+
+    labs(title = paste("Distribucion de" , var, "por Churn"),
+         x = var, y= "Frecuencia")+
+     theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+    print(cualitativas)
+ }
+```
+```{r}
+#Variables cuantitativa
+cuant <- c("tenure", "MonthlyCharges", "TotalCharges")
+
+#Histogramas para cada variable cuantitativa
+for (c in cuant) {
+  cuantitativas <- ggplot(churn_data, aes_string(x=c))+
+    geom_histogram(binwidth = 10, fill="steelblue", alpha=0.7)+
+    labs(title= paste("Distribucion de", c))+
+    theme_minimal()
+  print(cuantitativas)
+}
+```
+    
+-   Muestra los gráficos anteriores coloreados según la variable Churn
+    para poder ver la proporción de “churners” en función del valor de las
+    distintas variables. Se muestran dos ejemplos a continuación.
+
+```{r}
+#Variables cualitativas menos "customerID"
+cual_color <- c("gender", "SeniorCitizen", "Partner", "Dependents", "PhoneService", 
+              "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", 
+              "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", 
+              "Contract", "PaperlessBilling", "PaymentMethod")
+#Grafico para las variables cualitativas
+for (clc in cual_color){
+  cl_color <- ggplot(churn_data, aes_string(x=clc, fill= "Churn"))+
+    geom_bar(position = "fill", alpha=0.7)+
+    labs(title = paste("Distribucion de" , clc, "por Churn"),
+         x = clc, y= "Proporción")+
+     theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    scale_fill_manual(values = c("No" = "lightblue", "Yes" = "lightcoral")) 
+    print(cl_color)
+ }
+```
+
+```{r}
+#Variables cuantitativas
+cuant_color <- c("tenure", "MonthlyCharges", "TotalCharges")
+
+#Histograma para cada variable cuantitativa
+for (var in cuant_color) {
+  ct_color <- ggplot(churn_data, aes_string(x = var, fill = "Churn")) +
+    geom_histogram(binwidth = 10, position = "identity", alpha = 0.5) +  # Ajustar binwidth según sea necesario
+    labs(title = paste("Distribución de", var, "por Churn"),
+         x = var, y = "Frecuencia") +
+    theme_minimal() +
+    scale_fill_manual(values = c("No" = "lightblue", "Yes" = "lightcoral"))
+  
+  print(ct_color)
+}
+  
+```
+## Subsección 2
+
+-   De cara a la predicción del gasto mensual:
+
+    -   Para las variables categóricas realiza un boxplot que muestre la
+        distribución del gasto mensual (MonthlyCharges) para cada valor
+        de las variables
+
+    ```{r}
+#Variables categoricas
+categoricas <- c("gender", "SeniorCitizen", "Partner", "Dependents", "PhoneService", 
+              "MultipleLines", "InternetService", "OnlineSecurity", "OnlineBackup", 
+              "DeviceProtection", "TechSupport", "StreamingTV", "StreamingMovies", 
+              "Contract", "PaperlessBilling", "PaymentMethod")
+#Boxplot de variables categoricas
+for (c in categoricas) {
+  bxp <- ggplot(churn_data, aes_string(x=c, y= "MonthlyCharges", fill= c))+
+    geom_boxplot(alpha=0.7)+
+    labs(title = paste("Distribucion de MonthlyCharges por", c),
+         x = c, y = "MonthlyCharges")+
+    theme_minimal()+
+    theme(axis.text.x = element_text(angle = 45,hjust = 1))+
+    scale_fill_brewer(palette = "Set3")
+  print(bxp)
+}
+    ```
+
+    -   Para las variables numéricas realiza un gráfico de dispersión
+        que muestre la correlación entre variables. Puedes hacerlo uno a
+        uno o usar un gráfico de correlación conjunto. Se muestran dos
+        ejemplos a continuación
+
+```{r}
+# Lista de variables numéricas
+disp <- churn_data[,c("tenure", "MonthlyCharges", "TotalCharges")]
+#Grafico de dispersion conjunto
+    ggpairs(disp, 
+            upper = list(continuous = "cor"),  
+            lower = list(continuous = "smooth"), 
+            diag = list(continuous = "densityDiag"))  
+            
+```
+
+-   Cualquier otra cosa que se te ocurra y creas que da información
+    sobre los problemas que queremos resolver en el proyecto.
+
+```{r}
+#Facturacion por duracion de contrato
+ggplot(churn_data, aes(x=Contract,y=TotalCharges))+
+  geom_boxplot(binwidth = 5, alpha = 0.7)
+```
+
+En este proyecto en particular, los datos están limpios y no hay valores
+erróneos o anómalos. En general, esto es extraño que suceda y el proceso
+de análisis exploratorio te hubiera ayudado a encontrar y corregir estos
+errores. Si hay alguna variable que deba ser considerada como categórica
+en lugar de como numérica transfórmala. Es necesario para que los
+modelos de regresión o clasificación funcionen correctamente.
+
+```{r}
+#Cambiamos variable "SeniorCitizen" a categorica
+churn_data$SeniorCitizen <- as.factor(churn_data$SeniorCitizen)
+#Factorizamos "Churn" para utilizarlo de variable del modelo
+churn_data$Churn <- as.factor(churn_data$Churn)
+```
+
+Antes de seguir adelante, vamos a dividir el conjunto de datos en dos
+subconjuntos de entrenamiento y test: 
+- churn_train: Contendrá las 5000 primeras de churn_data 
+- churn_test: Contendrá las filas de la 5001 al final de churn_data
+
+```{r train_test}
+# Código para creación de conjuntos de entrenamiento y test 
+#Dividir el conjunto de datos
+churn_train <- churn_data[1:5000, ]
+churn_test <- churn_data[5001:nrow(churn_data), ]
+#Me dio problemas mas adelante 
+churn_train_no_id <- churn_train[, !(names(churn_train) %in% c("customerID"))]
+churn_test_no_id <- churn_test[, !(names(churn_test) %in% c("customerID"))]
+```
+
+Ajusta un modelo de regresión multilineal sobre los datos de entrenamiento churn_train:
+- Usa como variable objetivo MonthlyCharges
+- Usa como variables predictoras todas las demás menos customerId, TotalCharges y Churn.
+
+```{r}
+#Modelo de regresion lineal
+mdl <- lm(MonthlyCharges~. - TotalCharges - Churn, data= churn_train_no_id)
+```
+
+Muestra los detalles del modelo ajustado mediante la función summary
+aplicada al objeto donde has almacenado el modelo ajustado.
+
+```{r}
+#Resumen del modelo
+summary(mdl)
+```
+
+A partir del detalle sobre los coeficientes del modelo ajustado responde
+a las siguientes cuestiones: - ¿Cuáles son las variables/coeficientes
+que a un nivel de significancia del 95% podemos concluir que son no
+nulos?
+
+```{r}
+#Variables significativas al 95%
+var <- summary(mdl)$coefficients[which(summary(mdl)$coefficients[,4]<0.05),1]
+names(var)
+```
+Podriamos decir que todos los servicios adicionales a la linea de
+telefono o Internet como por ejemplo: 
+- Multiples lineas de teléfono 
+- Servicios de streaming 
+- Seguros para los dispositivos 
+- Fibra optica
+
+A partir del valor de los coeficientes, ¿podrías estimar el coste de los
+diferentes servicios: teléfono, DSL, Fibra, seguridad, TV, etc.? 
+```{r}
+#Resumen del modelo para obterner los coeficientes
+model_summary <- summary(mdl)
+#Extraer coeficientes del modelo
+coefficients <- model_summary$coefficients
+
+#Extraer coeficientes de interes
+cost_multiplelineyes <- coefficients["MultipleLinesYes", "Estimate"]
+cost_streamingtvyes <- coefficients["StreamingTVYes", "Estimate"]
+cost_dsl <- coefficients["InternetServiceNo", "Estimate"]
+cost_deviceprotection <- coefficients["DeviceProtectionYes", "Estimate"]
+cost_internetservicefiberoptic <- coefficients["InternetServiceFiber optic", "Estimate"]
+
+#Mostrar los resultados
+print(paste("Coste adicional por tener MultipleLine:", round(cost_multiplelineyes, 2)))
+print(paste("Coste adicional por tener StreamingTV:", round(cost_streamingtvyes, 2)))
+print(paste("Coste adicional por tener InternetServiceNo:", round(cost_dsl, 2)))
+print(paste("Coste adicional por tener DeviceProtection:", round(cost_deviceprotection, 2)))
+print(paste("Coste adicional por tener InternetService:", round(cost_internetservicefiberoptic, 2)))
+```
+
+Ahora a partir del modelo ajustado, haz una predicción sobre el conjunto de
+test: churn_test y calcula el error promedio de las predicciones. Como
+métrica del error del las predicciones usaremos el RMSE (root mean
+square error) : 𝑅𝑀𝑆𝐸= √1𝑛Σ(𝑦𝑖− 𝑦̂𝑖)2
+
+```{r}
+#Prediccion del conjunto de prueba
+pred <- predict(mdl, newdata= churn_test_no_id)
+
+#Calcular RSME
+rmse <- sqrt(mean((churn_test_no_id$MonthlyCharges-pred)^2))
+rmse
+```
+
+# Modelos de clasificación
+
+Vamos a diseñar y ajustar un modelo de Clasificación para predecir los
+clientes que pueden abandonar la compañía. Ajusta un modelo de regresión
+logística sobre los datos de entrenamiento churn_train: 
+- Usa como variable objetivo Churn
+- Usa como variables predictoras todas menos customerId.
+
+```{r}
+#Modelo de regresión logistica
+log_model <- glm(Churn ~. -TotalCharges, data = churn_train_no_id, family = binomial)
+
+#Resumen del modelo
+summary(log_model)
+```
+
+Con el modelo ajustado, predice sobre los datos de test (churn_test) la
+probabilidad de abandono de los clientes. A partir de dicha probabilidad
+asigna a una variable churn_pred =”Yes” si prob \>0.5 y “No” en caso
+contrario. Calcula la matriz de confusión de la predicción:
+
+|      |     | Pred |
+|------|-----|------|
+| Real | No  | Yes  |
+| No   | TN  | FP   |
+| Yes  | FN  | TP   |
+
+```{r}
+# Realizar predicciones sobre el conjunto de prueba, obteniendo probabilidades
+prob_pred <- predict(log_model,newdata = churn_test_no_id, type = "response")
+
+# Asignar "Yes" o "No" en función de la probabilidad
+churn_test_no_id$churn_pred <- ifelse(prob_pred > 0.5, "Yes", "No")
+
+#Creamos la matrix de confusion
+confusion_matrix <- table(Pred = churn_test_no_id$churn_pred, Real = churn_test_no_id$Churn)
+
+#Mostramos la matriz de confusion
+print(confusion_matrix)
+
+# Extraer los valores de la matriz de confusión
+TN <- confusion_matrix["No", "No"]   # Verdaderos Negativos
+FP <- confusion_matrix["Yes", "No"]  # Falsos Positivos
+FN <- confusion_matrix["No", "Yes"]  # Falsos Negativos
+TP <- confusion_matrix["Yes", "Yes"] # Verdaderos Positivos
+
+# Mostrar los resultados
+print(paste("Verdaderos Negativos (TN):", TN))
+print(paste("Falsos Positivos (FP):", FP))
+print(paste("Falsos Negativos (FN):", FN))
+print(paste("Verdaderos Positivos (TP):", TP))
+```
+
+A partir de ella calcula:
+
+\- La precisión global de la predicción: Accuracy = (TN + TP) / (TN +
+FN + FP + TP)
+
+\- La ratio de falsos positivos: FPR = FP / (FP + TN)
+
+\- La ratio de falsos negativos: FNR = FN / (FN + TP)
+
+\- La ratio de verdaderos positivos: TPR = TP / (FN + TP)
+
+```{r}
+#Calcular la precision global asi predecimos los clientes que abandonan como los que no
+accuracy <- (TN + TP) / (TN + FN + FP + TP)
+print(paste("Precisión global (Accuracy):", round(accuracy,3)))
+
+#Calcular el ratio de falsos positivos, asi medimos la proporcion que el modelo predijo incorrectamente que el cliente
+#abandonaria cuando en realidad no
+FPR <- FP / (FP + TN)
+print(paste("Ratio de falsos positivos(FPR):", round(FPR,3)))
+
+#Calcular el ratio de falsos negativos, asi medimos la proporcion que el modelo predijo incorrectamente que el cliente
+# abandonaria cuando en realidad si lo hizo
+FNR <- FN / (FN + TP)
+print(paste("Ratio de falsos Negativos(FNR):", round(FNR,3)))
+
+#Calcular la ratio de verdaderos positivos (Sensibilidad o TPR) modelo predice correctamente los clientes que abandonan
+TPR <- TP / (FN + TP)
+print(paste("Ratio de verdaderos positivos(TPR - Sensibilidad):", round(TPR,3)))
+```
+
+Ahora, ajusta en el conjunto de entrenamiento un modelo de clasificación
+para la variable Churn que use como predictores solo Contract, Tenure e
+InternetService. Predice en el conjunto de test y calcula la matriz de
+confusión, así como las métricas que has calculado para el modelo
+anterior y compara los resultados.
+
+```{r}
+#Modelo simplificado
+mod_clas_churn <- glm(Churn ~ Contract + tenure + InternetService, family = binomial, data = churn_train_no_id)
+summary(mod_clas_churn)
+
+#Realizar predicciones sobre el nuevo conjunto test
+prob_pred_churn <-  predict(mod_clas_churn, newdata = churn_test_no_id, type = "response")
+
+#Asignar "Yes" o "No" basado  en la probabilidad (umbral 0.5)
+churn_test_no_id$churn_pred <- ifelse(prob_pred_churn > 0.5, "Yes", "No")
+
+#Crear la matriz de confusion para el segundo modelo
+confusion_matrix_churn <- table(Pred = churn_test_no_id$churn_pred, Real = churn_test_no_id$Churn)
+
+#Mostrar matriz de confusion
+print(confusion_matrix_churn)
+
+#Extraer valores de la matriz de confusion del segundo modelo
+TN_churn <- confusion_matrix_churn["No", "No"]   # Verdaderos Negativos
+FP_churn <- confusion_matrix_churn["Yes", "No"]  # Falsos Positivos
+FN_churn <- confusion_matrix_churn["No", "Yes"]  # Falsos Negativos
+TP_churn <- confusion_matrix_churn["Yes", "Yes"] # Verdaderos Positivos
+
+# Mostrar los valores
+print(paste("TN:", TN_churn))
+print(paste("FP:", FP_churn))
+print(paste("FN:", FN_churn))
+print(paste("TP:", TP_churn))
+
+#Calcular la precision global asi predecimos los clientes que abandonan como los que no
+accuracy_churn <- (TN_churn + TP_churn) / (TN_churn + FN_churn + FP_churn + TP_churn)
+print(paste("Precisión global (Accuracy):", round(accuracy_churn,3)))
+
+#Calcular el ratio de falsos positivos, asi medimos la proporcion que el modelo predijo incorrectamente que el cliente
+#abandonaria cuando en realidad no
+FPR_churn <- FP_churn / (FP_churn + TN_churn)
+print(paste("Ratio de falsos positivos(FPR):", round(FPR_churn,3)))
+
+#Calcular el ratio de falsos negativos, asi medimos la proporcion que el modelo predijo incorrectamente que el cliente
+# abandonaria cuando en realidad si lo hizo
+FNR_churn <- FN_churn / (FN_churn + TP_churn)
+print(paste("Ratio de falsos Negativos(FNR):", round(FNR_churn,3)))
+
+#Calcular la ratio de verdaderos positivos (Sensibilidad o TPR) modelo predice correctamente los clientes que abandonan
+TPR_churn <- TP_churn / (FN_churn + TP_churn)
+print(paste("Ratio de verdaderos positivos(TPR - Sensibilidad):", round(TPR_churn,3)))
+```
+
+# Simulación de campaña de Retención
+
+Ahora a partir de los resultados del primer modelo de regresión
+logística (en el que usabas todas las variables) vamos a evaluar el
+rendimiento económico de una campaña de retención. Usaremos las
+predicciones sobre el conjunto de test. Para calcular el rendimiento de
+la campaña tendremos en cuenta lo siguiente:
+
+\- A los clientes clasificados por el modelo como “Churners” se les
+ofrecerá un teléfono de regalo a cambio de que firmen un contrato de
+permanencia por un año. El coste del teléfono lo denominamos CT. Estos
+clientes aceptaran el trato con una probabilidad AR.
+
+\- El beneficio asociado a la retención de un cliente lo estimamos como
+el consumo medio anual de un cliente menos el coste de gestión (uso de
+infraestructura, facturación, atención al cliente etc). Estimaremos que
+el retorno medio de la retención de un cliente es R (lo fijaremos en 500
+Euros).
+
+\- Un cliente que abandona la compañía, estimamos que genera una pérdida
+igual al retorno R que genera la retención, es decir 500 Euros .
+
+Para diferentes umbrales de clasificación up = (0, 0.1,0.2,0.3, 0.4,
+0.5, 0.6 ,0.7, 0.8, 0.9, y 1), en función de la probabilidad de Churn
+estimada por el modelo clasificaremos a los clientes en pred_churn =
+”Yes” si prob\>up y “No” en caso contrario. En el apartado anterior
+hemos utilizado la elección habitual de up=0.5.
+
+Conforme suba el umbral de probabilidad, seleccionaremos a menos
+clientes para la campaña. Por un lado, esto tendrá menos coste debido al
+incentivo que se ofrece, pero por otro lado se obtendrán menos
+retenciones. Hay que encontrar el umbral óptimo en el que se obtiene un
+mayor rendimiento para la campaña.
+
+Para cada umbral de probabilidad, calculamos a partir de la probabilidad
+del modelo la variable churn_pred y calculamos la matriz de confusión
+
+|      |     |      |
+|------|:----|------|
+|      |     | PRED |
+| REAL | No  | Yes  |
+| No   | TN  | FP   |
+| Yes  | FN  | TP   |
+
+Podemos estimar el beneficio de la campaña, para ese umbral, como
+
+Beneficio = ResultadoConCampaña – ResultadoSinCampaña
+
+y
+
+ResultadoConCampaña= - FP*AR*I - TP*AR* I - TP*(1-AR)*R - FN*R*
+
+*donde*
+
+*- El primer y segundo término corresponde el gasto en los teléfonos que
+regalamos a los clientes que aceptan la promoción y que no hubieran
+abandonado la compañía, aunque no se hubiera hecho campaña. - El tercero
+representa la perdida de los clientes a los que se ha hecho la
+promoción, no la han aceptado y se han marchado.*
+
+*- El cuarto representa a los clientes a los que no se ha realizado la
+promoción y han acabado marchándose. ResultadoSinCampaña = - (FN + TP)*R
+
+-   Este valor representa la pérdida de ingresos debido al abandono real
+    de los clientes, en caso de no hacerse campaña. Notad que ese
+    término no depende del modelo ajustado ni de los umbrales de
+    probabilidad.
+
+Nota que el resultado en ambos casos es un número negativo. Solo tenemos
+en cuenta pérdidas económicas, ya sea por gasto de promoción o por la
+facturación esperada a futuro de un cliente que abandona la compañía.
+```{r}
+# Eliminamos columnas 'customerID' y 'TotalCharges' 
+churn_train_no_id <- churn_train[, !(names(churn_train) %in% c("customerID", "TotalCharges"))]
+churn_test_no_id <- churn_test[, !(names(churn_test) %in% c("customerID", "TotalCharges"))]
+
+# Ajustamos el modelo logístico a los datos limpios
+log_model <- glm(Churn ~ ., family = binomial, data = churn_train_no_id)
+
+# Definimos los umbrales de probabilidad
+up <- seq(0, 1, by = 0.1)
+
+# Función para calcular la matriz de confusión y el beneficio
+calcular_beneficio <- function(up, I, AR, R, prob_pred, churn_test_no_id) {
+  # Asignamos "Yes" o "No" basado en el umbral de probabilidad
+  churn_test_no_id$churn_pred <- ifelse(prob_pred > up, "Yes", "No")
+  
+  # Creamos la matriz de confusión
+  confusion_matriz_rend <- table(Pred = churn_test_no_id$churn_pred, Real = churn_test_no_id$Churn)
+  
+  # Nos aseguramos de que la matriz de confusión tiene todas las combinaciones
+  if (!"No" %in% rownames(confusion_matriz_rend)) confusion_matriz_rend <- rbind(confusion_matriz_rend, No = c(0, 0))
+  if (!"Yes" %in% rownames(confusion_matriz_rend)) confusion_matriz_rend <- rbind(confusion_matriz_rend, Yes = c(0, 0))
+  if (!"No" %in% colnames(confusion_matriz_rend)) confusion_matriz_rend <- cbind(confusion_matriz_rend, No = c(0, 0))
+  if (!"Yes" %in% colnames(confusion_matriz_rend)) confusion_matriz_rend <- cbind(confusion_matriz_rend, Yes = c(0, 0))
+  
+  # Extraemos los valores de la matriz de confusión
+  TN <- confusion_matriz_rend["No", "No"]
+  FP <- confusion_matriz_rend["Yes", "No"]
+  FN <- confusion_matriz_rend["No", "Yes"]
+  TP <- confusion_matriz_rend["Yes", "Yes"]
+  
+  # Cálculamos el beneficio de la campaña
+  resultado_con_campaña <- -FP * AR * I - TP * AR * I - TP * (1 - AR) * R - FN * R
+  resultado_sin_campaña <- -(FN + TP) * R
+  beneficio <- resultado_con_campaña - resultado_sin_campaña
+  
+  return(beneficio)
+}
+```
+
+Vamos a calcular los resultados de la campaña para dos escenarios de
+incentivo distintos.
+
+1)  Supongamos:
+
+-   Coste teléfono de regalo: I=200 Eur
+
+-   Probabilidad de aceptación AR= 0.4 - R = 500 Eur
+
+Calcula para cada umbral de probabilidad, el beneficio de la campaña
+usando las fórmulas anteriores. ¿Cuál sería el umbral de probabilidad
+para la selección de clientes óptimo para la campaña?. ¿Qué beneficios
+generaría?
+```{r}
+###PRIMER CASO###
+
+# Variables primer caso
+I_1 <- 200
+AR_1 <- 0.4
+R_1 <- 500
+
+ # Calculamos las probabilidades del modelo logístico sobre churn_test_no_id
+prob_pred_1 <- predict(log_model, newdata = churn_test_no_id, type = "response")
+
+
+# Calculamos el beneficio para cada umbral
+beneficio_1 <- sapply(up, calcular_beneficio, I = I_1, AR = AR_1, R = R_1, prob_pred = prob_pred_1, churn_test_no_id = churn_test_no_id)
+
+# Encontramos el umbral óptimo y el beneficio máximo para el primer caso
+umbral_optimo_1 <- up[which.max(beneficio_1)]
+beneficio_max_1 <- max(beneficio_1)
+
+# Mostramos los resultados del primer caso
+print(paste("Umbral óptimo (Caso 1):", umbral_optimo_1))  
+print(paste("Beneficio máximo (Caso 1):", round(beneficio_max_1, 2)))
+```
+
+2)  Supongamos:
+
+-   Coste teléfono: I=400 Eur
+
+-   Probabilidad de aceptación AR= 0.8 - R = 500 Eur
+
+Calcula el umbral óptimo y el beneficio de la campaña para el umbral
+óptimo. ¿Se obtienen mejores o peores resultados respecto a la campaña
+con incentivo menor?
+
+```{r}
+###SEGUNDO CASO###
+
+# Variables segundo caso
+I_2 <- 400
+AR_2 <- 0.8
+R_2 <- 500
+
+# Calculamos las probabilidades del modelo logístico sobre churn_test_no_id
+prob_pred_2 <- predict(log_model, newdata = churn_test_no_id, type = "response")
+
+# Calculamos el beneficio para cada umbral
+beneficio_2 <- sapply(up, calcular_beneficio, I = I_2, AR = AR_2, R = R_2, prob_pred = prob_pred_2, churn_test_no_id = churn_test_no_id)
+
+# Encontramos el umbral óptimo y el beneficio máximo para el segundo caso
+umbral_optimo_2 <- up[which.max(beneficio_2)]
+beneficio_max_2 <- max(beneficio_2)
+
+# Mostramos resultados del segundo caso
+print(paste("Umbral óptimo (Caso 2):", umbral_optimo_2))
+print(paste("Beneficio máximo (Caso 2):", round(beneficio_max_2, 2)))
+```
